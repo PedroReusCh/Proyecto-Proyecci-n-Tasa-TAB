@@ -4,6 +4,7 @@ Implementa validación rodante (Walk-Forward Cross-Validation) y cálculo de mé
 """
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
+import warnings
 import numpy as np
 import pandas as pd
 from src.forecasting_engine import (
@@ -15,6 +16,8 @@ from src.forecasting_engine import (
     EnsembleForecaster,
     ForecastResult,
 )
+
+warnings.filterwarnings("ignore")
 
 @dataclass(frozen=True)
 class ModelScore:

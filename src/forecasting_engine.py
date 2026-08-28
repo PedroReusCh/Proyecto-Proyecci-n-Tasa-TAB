@@ -4,12 +4,16 @@ Implementa modelos estadísticos, financieros y de machine learning para horizon
 """
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
+import warnings
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from statsmodels.tsa.api import VAR
 from sklearn.linear_model import Ridge
+
+# Silenciar advertencias numéricas no críticas de statsmodels
+warnings.filterwarnings("ignore")
 
 HORIZONS_BUSINESS_DAYS = {
     "1 Mes (30d)": 21,
