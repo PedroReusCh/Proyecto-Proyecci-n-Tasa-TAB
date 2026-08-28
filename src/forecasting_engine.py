@@ -195,13 +195,13 @@ class VasicekForecaster(BaseForecaster):
         
         dt = 1.0 / 252.0  # Paso diario en base anual
         
-        # kappa (velocidad de reversión a la media)
+        # kappa (velocidad de reversión a la media) y theta (media de largo plazo)
         if b < 0:
-            kappa = -np.log(1.0 + b) / dt if (1.0 + b) > 0 else 0.5
-            theta = a / (1.0 - np.exp(-kappa * dt)) * dt if (1.0 - np.exp(-kappa * dt)) != 0 else np.mean(sub_series)
+            kappa = -np.log(1.0 + b) / dt if (1.0 + b) > 0 else -b / dt
+            theta = -a / b if abs(b) > 1e-7 else float(np.mean(sub_series))
         else:
             kappa = 0.3
-            theta = np.mean(sub_series)
+            theta = float(np.mean(sub_series))
         
         # Volatilidad sigma
         residuals = dr - (a + b * r_prev)
