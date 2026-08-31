@@ -5,6 +5,17 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ---
 
+## [1.2.0] - 2026-08-31
+
+### Añadido
+* **Despliegue Público en la Nube:** Despliegue en producción gratuito sobre **Streamlit Community Cloud** con URL pública: [`https://proyeccion-tab-uf.streamlit.app`](https://proyeccion-tab-uf.streamlit.app).
+* **Mecanismo de Respaldo Resiliente (`data/latest_cbf_rates.xlsx`):** Inclusión de una copia de respaldo local de fijaciones oficiales para garantizar alta disponibilidad en entornos cloud con restricciones de cortafuegos o latencia.
+* **Configuración Headless (`.streamlit/config.toml`):** Configuración del servidor para ejecución desatendida en la nube con `headless = true` y desactivación de telemetría.
+* **Archivo de Dependencias Cloud (`requirements.txt`):** Generación de archivo de dependencias estándar para el gestor de paquetes de Streamlit Cloud.
+* **Actualización Integral de Documentación:** Incorporación en `README.md` de la guía completa de despliegue, arquitectura de datos y manual funcional.
+
+---
+
 ## [1.1.0] - 2026-08-31
 
 ### Añadido
