@@ -39,7 +39,7 @@ def get_latest_excel_download_url(page_url: str = CBF_HISTORICAL_PAGE_URL) -> st
 def fetch_cbf_historical_excel(url: Optional[str] = None) -> bytes:
     """
     Descarga los bytes del archivo Excel de CBF.
-    Si la conexión a la web de CBF falla (por bloqueos de firewall en la nube o timeouts),
+    Si la conexión a la web de CBF falla o devuelve HTML/bloqueos,
     utiliza como respaldo seguro el archivo local empaquetado en data/latest_cbf_rates.xlsx.
     """
     import os
@@ -49,13 +49,15 @@ def fetch_cbf_historical_excel(url: Optional[str] = None) -> bytes:
     try:
         resp = requests.get(target_url, headers={"User-Agent": USER_AGENT}, timeout=15)
         resp.raise_for_status()
+        if not resp.content.startswith(b"PK") or len(resp.content) < 5000:
+            raise ValueError("La respuesta recibida no es un archivo Excel válido (no empieza con firma PK).")
         return resp.content
-    except Exception as e:
+    except Exception:
         local_fallback = pathlib.Path(__file__).parent.parent / "data" / "latest_cbf_rates.xlsx"
         if local_fallback.exists():
             with open(local_fallback, "rb") as f:
                 return f.read()
-        raise RuntimeError(f"Error al descargar datos de CBF y no se encontró respaldo local: {e}")
+        raise RuntimeError("No se pudo obtener el archivo de CBF y no se encontró el respaldo local.")
 
 def parse_fixing_rates_excel(content: bytes) -> pd.DataFrame:
     """
@@ -96,8 +98,20 @@ def clean_tab_uf_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 def get_clean_tab_uf_dataset(excel_bytes: Optional[bytes] = None) -> CBFDataResult:
     """Obtiene el dataset estructurado y validado listo para modelado."""
-    content = excel_bytes if excel_bytes is not None else fetch_cbf_historical_excel()
-    df = parse_fixing_rates_excel(content)
+    import pathlib
+    
+    try:
+        content = excel_bytes if excel_bytes is not None else fetch_cbf_historical_excel()
+        df = parse_fixing_rates_excel(content)
+    except Exception as e:
+        local_fallback = pathlib.Path(__file__).parent.parent / "data" / "latest_cbf_rates.xlsx"
+        if local_fallback.exists():
+            with open(local_fallback, "rb") as f:
+                content = f.read()
+            df = parse_fixing_rates_excel(content)
+        else:
+            raise RuntimeError(f"Error procesando datos de CBF y fallo el respaldo local: {e}")
+            
     if df.empty:
         raise ValueError("El dataset procesado no contiene registros válidos.")
     
