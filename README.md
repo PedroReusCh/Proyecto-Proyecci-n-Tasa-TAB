@@ -52,19 +52,24 @@ La plataforma se encuentra desplegada y disponible de forma pública y gratuita 
 ## 🛠️ Instalación y Ejecución Local
 
 ### 1. Requisitos Previos
+
 * Gestor de paquetes `uv` instalado en el sistema (o Python 3.10+).
 
 ### 2. Ejecución de la Aplicación en Local
+
 Para iniciar la aplicación interactiva de Streamlit, ejecute en la terminal:
 
 ```bash
 uv run streamlit run app.py
 ```
+
 O con activación tradicional de entorno virtual:
+
 ```powershell
 & ".\.venv\Scripts\Activate.ps1"
 streamlit run app.py
 ```
+
 La aplicación se abrirá automáticamente en su navegador web en `http://localhost:8501`.
 
 ---
@@ -72,9 +77,11 @@ La aplicación se abrirá automáticamente en su navegador web en `http://localh
 ## ☁️ Guía de Despliegue en Streamlit Community Cloud
 
 1. **Subir cambios a GitHub:**
+
    ```bash
    git push origin master
    ```
+
 2. **Conectar en Streamlit Cloud:**
    * Ingresar a [share.streamlit.io](https://share.streamlit.io/).
    * Crear nueva aplicación apuntando a:

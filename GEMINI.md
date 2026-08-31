@@ -5,6 +5,7 @@ Este archivo define las directivas técnicas, lineamientos de calidad y estánda
 ---
 
 ## 1. Directivas Obligatorias
+
 * **Idioma:** Todas las respuestas, explicaciones, documentación y commits de Git deben ser exclusivamente en **español**.
 * **Gestión de Entorno:** Verificar e instalar automáticamente las dependencias antes de ejecutar cualquier código (`uv`, `pandas`, `openpyxl`, `streamlit`, `plotly`, `statsmodels`, `scikit-learn`, `scipy`, `pytest`, `requests`).
 * **Archivos Raíz Obligatorios:** Mantener actualizados `GEMINI.md`, `README.md` y `CHANGELOG.md`.
@@ -13,6 +14,7 @@ Este archivo define las directivas técnicas, lineamientos de calidad y estánda
 ---
 
 ## 2. Contratos Técnicos de Datos (CBF)
+
 * **Fuente:** Web Oficial CBF (`https://cbf.cl/chilean-benchmarks/historical-rates/?lang=es`).
 * **Hoja:** `FixingRates`.
 * **Encabezados:** Fila 4 (nombres de tenores), datos a partir de fila 6.
@@ -25,6 +27,7 @@ Este archivo define las directivas técnicas, lineamientos de calidad y estánda
 ---
 
 ## 3. Estándares Cuantitativos y de Código
+
 * Modelos estadísticos y financieros rigurosos (AutoARIMA, Holt-Winters ETS, Vasicek/Ornstein-Uhlenbeck, VAR multivariado, ML Lags, Ensemble óptimo).
 * Validación sin fuga de datos futuros (*Walk-Forward Validation*).
 * Tipado estricto en Python (`typing`) y cobertura de pruebas con `pytest`.

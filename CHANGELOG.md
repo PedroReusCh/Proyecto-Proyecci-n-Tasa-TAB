@@ -8,6 +8,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 ## [1.2.0] - 2026-08-31
 
 ### Añadido
+
 * **Despliegue Público en la Nube:** Despliegue en producción gratuito sobre **Streamlit Community Cloud** con URL pública: [`https://proyeccion-tab-uf.streamlit.app`](https://proyeccion-tab-uf.streamlit.app).
 * **Mecanismo de Respaldo Resiliente (`data/latest_cbf_rates.xlsx`):** Inclusión de una copia de respaldo local de fijaciones oficiales para garantizar alta disponibilidad en entornos cloud con restricciones de cortafuegos o latencia.
 * **Configuración Headless (`.streamlit/config.toml`):** Configuración del servidor para ejecución desatendida en la nube con `headless = true` y desactivación de telemetría.
@@ -19,6 +20,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 ## [1.1.0] - 2026-08-31
 
 ### Añadido
+
 * **Módulo de Diagnóstico Econométrico (`src/diagnostics.py`):**
   * Test de Dickey-Fuller Aumentado (ADF) para evaluar estacionariedad en nivel ($r_t$) y en primera diferencia ($\Delta r_t$).
   * Cálculo de correlogramas de Autocorrelación (ACF) y Autocorrelación Parcial (PACF) con bandas de significancia de Bartlett al 95%.
@@ -41,6 +43,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 ## [1.0.0] - 2026-08-28
 
 ### Añadido
+
 * **Cliente de Ingesta CBF (`src/cbf_client.py`):** Descarga dinámica y automática del archivo Excel oficial de fijaciones desde la web de CBF, con parsing de la hoja `FixingRates` (Fecha y tenores TAB UF a 90, 180 y 360 días).
 * **Motor Cuantitativo Multimodelo (`src/forecasting_engine.py`):** Implementación de 6 modelos de proyección:
   * AutoARIMA / SARIMAX optimizado por AIC.
