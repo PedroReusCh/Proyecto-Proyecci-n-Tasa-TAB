@@ -37,11 +37,25 @@ def get_latest_excel_download_url(page_url: str = CBF_HISTORICAL_PAGE_URL) -> st
     return CBF_FALLBACK_EXCEL_URL
 
 def fetch_cbf_historical_excel(url: Optional[str] = None) -> bytes:
-    """Descarga los bytes del archivo Excel de CBF."""
+    """
+    Descarga los bytes del archivo Excel de CBF.
+    Si la conexión a la web de CBF falla (por bloqueos de firewall en la nube o timeouts),
+    utiliza como respaldo seguro el archivo local empaquetado en data/latest_cbf_rates.xlsx.
+    """
+    import os
+    import pathlib
+    
     target_url = url or get_latest_excel_download_url()
-    resp = requests.get(target_url, headers={"User-Agent": USER_AGENT}, timeout=30)
-    resp.raise_for_status()
-    return resp.content
+    try:
+        resp = requests.get(target_url, headers={"User-Agent": USER_AGENT}, timeout=15)
+        resp.raise_for_status()
+        return resp.content
+    except Exception as e:
+        local_fallback = pathlib.Path(__file__).parent.parent / "data" / "latest_cbf_rates.xlsx"
+        if local_fallback.exists():
+            with open(local_fallback, "rb") as f:
+                return f.read()
+        raise RuntimeError(f"Error al descargar datos de CBF y no se encontró respaldo local: {e}")
 
 def parse_fixing_rates_excel(content: bytes) -> pd.DataFrame:
     """
