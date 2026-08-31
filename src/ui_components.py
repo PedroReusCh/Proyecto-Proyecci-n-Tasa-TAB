@@ -359,3 +359,149 @@ def create_spreads_history_figure(historical_df: pd.DataFrame) -> go.Figure:
         margin=dict(l=40, r=40, t=60, b=40),
     )
     return fig
+
+def create_acf_pacf_figure(
+    acf_vals: np.ndarray,
+    pacf_vals: np.ndarray,
+    conf_bound: float,
+    target_name: str = "TAB UF 90 Días",
+) -> go.Figure:
+    """Crea correlogramas ACF y PACF con bandas de confianza de Bartlett al 95%."""
+    from plotly.subplots import make_subplots
+    
+    lags = list(range(len(acf_vals)))
+    
+    fig = make_subplots(
+        rows=1, cols=2,
+        subplot_titles=(f"Autocorrelación (ACF) - {target_name}", f"Autocorrelación Parcial (PACF) - {target_name}")
+    )
+    
+    # 1. ACF
+    fig.add_trace(
+        go.Bar(x=lags, y=acf_vals, name="ACF", marker_color="#1f77b4"),
+        row=1, col=1
+    )
+    fig.add_hline(y=conf_bound, line_dash="dash", line_color="red", row=1, col=1)
+    fig.add_hline(y=-conf_bound, line_dash="dash", line_color="red", row=1, col=1)
+    
+    # 2. PACF
+    fig.add_trace(
+        go.Bar(x=lags, y=pacf_vals, name="PACF", marker_color="#ff7f0e"),
+        row=1, col=2
+    )
+    fig.add_hline(y=conf_bound, line_dash="dash", line_color="red", row=1, col=2)
+    fig.add_hline(y=-conf_bound, line_dash="dash", line_color="red", row=1, col=2)
+    
+    fig.update_layout(
+        template="plotly_white",
+        showlegend=False,
+        margin=dict(l=40, r=40, t=60, b=40),
+    )
+    fig.update_xaxes(title_text="Retardo (Lags)", row=1, col=1)
+    fig.update_xaxes(title_text="Retardo (Lags)", row=1, col=2)
+    fig.update_yaxes(title_text="Coeficiente", row=1, col=1)
+    fig.update_yaxes(title_text="Coeficiente", row=1, col=2)
+    return fig
+
+def create_residuals_diagnostics_figure(
+    residuals: np.ndarray,
+    model_name: str = "AutoARIMA",
+) -> go.Figure:
+    """Distribución y serie temporal de los residuos del modelo ganador."""
+    from plotly.subplots import make_subplots
+    
+    fig = make_subplots(
+        rows=1, cols=2,
+        subplot_titles=(f"Serie de Residuos ({model_name})", "Distribución de Errores vs Normal")
+    )
+    
+    # Serie temporal de residuos
+    fig.add_trace(
+        go.Scatter(y=residuals, mode="lines", name="Residuos", line=dict(color="#1f77b4", width=1.5)),
+        row=1, col=1
+    )
+    fig.add_hline(y=0.0, line_dash="dash", line_color="black", row=1, col=1)
+    
+    # Histograma de residuos
+    fig.add_trace(
+        go.Histogram(x=residuals, nbinsx=30, name="Densidad", marker_color="#2ca02c", opacity=0.75),
+        row=1, col=2
+    )
+    
+    fig.update_layout(
+        template="plotly_white",
+        showlegend=False,
+        margin=dict(l=40, r=40, t=60, b=40),
+    )
+    fig.update_xaxes(title_text="Observación", row=1, col=1)
+    fig.update_xaxes(title_text="Error Residual", row=1, col=2)
+    return fig
+
+def create_stress_testing_figure(
+    stress_res,
+    target_name: str = "TAB UF 90 Días",
+) -> go.Figure:
+    """Gráfico comparativo de trayectorias bajo escenarios de estrés."""
+    fig = go.Figure()
+    
+    dates = stress_res.future_dates
+    
+    # Banda de incertidumbre estresada
+    fig.add_trace(
+        go.Scatter(
+            x=dates + dates[::-1],
+            y=list(stress_res.stressed_upper_95) + list(stress_res.stressed_lower_95[::-1]),
+            fill="toself",
+            fillcolor="rgba(214, 39, 40, 0.12)",
+            line=dict(color="rgba(255,255,255,0)"),
+            name="Cono de Incertidumbre Estresado (95%)",
+            hoverinfo="skip",
+        )
+    )
+    
+    # Escenario Base
+    fig.add_trace(
+        go.Scatter(
+            x=dates,
+            y=stress_res.base_path,
+            mode="lines",
+            name="Escenario Base (Sin Shock)",
+            line=dict(color="#1f77b4", width=3),
+            hovertemplate="<b>Base:</b> %{y:.2f}%<extra></extra>",
+        )
+    )
+    
+    # Escenario Alcista
+    fig.add_trace(
+        go.Scatter(
+            x=dates,
+            y=stress_res.bull_shock_path,
+            mode="lines",
+            name=f"Estrés Alcista (+{stress_res.shock_bp:.0f} pb)",
+            line=dict(color="#d62728", width=2.5, dash="dash"),
+            hovertemplate=f"<b>Alcista (+{stress_res.shock_bp:.0f} pb):</b> %{{y:.2f}}%<extra></extra>",
+        )
+    )
+    
+    # Escenario Bajista
+    fig.add_trace(
+        go.Scatter(
+            x=dates,
+            y=stress_res.bear_shock_path,
+            mode="lines",
+            name=f"Estrés Bajista (-{stress_res.shock_bp:.0f} pb)",
+            line=dict(color="#2ca02c", width=2.5, dash="dash"),
+            hovertemplate=f"<b>Bajista (-{stress_res.shock_bp:.0f} pb):</b> %{{y:.2f}}%<extra></extra>",
+        )
+    )
+    
+    fig.update_layout(
+        title=f"<b>Simulador de Estrés Financiero ({target_name}) - Shock de ±{stress_res.shock_bp:.0f} pb</b>",
+        xaxis_title="Fecha Proyectada",
+        yaxis_title="Tasa de Interés (%)",
+        template="plotly_white",
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(l=40, r=40, t=60, b=40),
+    )
+    return fig

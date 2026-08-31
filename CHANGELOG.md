@@ -5,6 +5,28 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ---
 
+## [1.1.0] - 2026-08-31
+
+### Añadido
+* **Módulo de Diagnóstico Econométrico (`src/diagnostics.py`):**
+  * Test de Dickey-Fuller Aumentado (ADF) para evaluar estacionariedad en nivel ($r_t$) y en primera diferencia ($\Delta r_t$).
+  * Cálculo de correlogramas de Autocorrelación (ACF) y Autocorrelación Parcial (PACF) con bandas de significancia de Bartlett al 95%.
+  * Test de Ljung-Box para validar formalmente la hipótesis de ruido blanco sobre los residuos del modelo.
+* **Módulo de Escenarios de Estrés / Stress Testing (`src/stress_testing.py`):**
+  * Simulador de shocks de Política Monetaria y mercado en puntos base ($\pm \text{pbs}$) con curva de transmisión gradual.
+  * Selector de multiplicadores de volatilidad para estresar los conos de dispersión.
+  * Gráfico comparativo de trayectorias y cuadro de impacto en tasas terminales por hito (1m, 3m, 6m, 12m).
+* **Componentes Gráficos Avanzados (`src/ui_components.py`):**
+  * `create_acf_pacf_figure`: Subplots interactivos de autocorrelación.
+  * `create_residuals_diagnostics_figure`: Serie de residuos e histograma de errores vs distribución normal.
+  * `create_stress_testing_figure`: Visualización de escenarios Base vs Alcista vs Bajista con cono de estrés al 95%.
+* **Ampliación de la Interfaz Streamlit (`app.py`):**
+  * Pestaña 4: *🔬 Diagnóstico Econométrico*.
+  * Pestaña 5: *⚡ Escenarios de Estrés (Stress Testing)*.
+* **Ampliación de Pruebas Unitarias:** 31 pruebas unitarias cubriendo todas las nuevas funcionalidades.
+
+---
+
 ## [1.0.0] - 2026-08-28
 
 ### Añadido
@@ -21,5 +43,5 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 * **Estructura Temporal de Tasas (`src/term_structure.py`):** Curva de rendimiento actual vs proyectadas y spreads de pendiente (*slope*) y curvatura (*butterfly*).
 * **Componentes Gráficos Plotly (`src/ui_components.py`):** Gráficos interactivos con intervalos de confianza al 80% y 95%, abanico Monte Carlo y comparación de modelos.
 * **Exportador de Reportes (`src/exporter.py`):** Generación de libros Excel multipestaña (`.xlsx`) y archivos CSV.
-* **Aplicación Web Interactiva (`app.py`):** Dashboard Streamlit completo con panel lateral de filtros y 5 pestañas de análisis.
+* **Aplicación Web Interactiva (`app.py`):** Dashboard Streamlit completo con panel lateral de filtros y pestañas de análisis.
 * **Suite de Pruebas Automatizadas (`tests/`):** 27 pruebas unitarias con cobertura total y verificación de entorno.

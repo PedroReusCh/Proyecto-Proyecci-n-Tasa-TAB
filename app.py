@@ -27,6 +27,14 @@ from src.term_structure import (
     compute_projected_curves,
     TermStructureCurve,
 )
+from src.diagnostics import (
+    run_adf_test,
+    run_ljung_box_test,
+    compute_acf_pacf,
+)
+from src.stress_testing import (
+    simulate_stress_scenarios,
+)
 from src.ui_components import (
     create_forecast_figure,
     create_tournament_comparison_figure,
@@ -34,6 +42,9 @@ from src.ui_components import (
     create_monte_carlo_hist_figure,
     create_term_structure_figure,
     create_spreads_history_figure,
+    create_acf_pacf_figure,
+    create_residuals_diagnostics_figure,
+    create_stress_testing_figure,
 )
 from src.exporter import generate_excel_report, generate_csv_report
 
@@ -171,11 +182,13 @@ with st.sidebar:
         active_model_name = selected_model_choice
 
 # Pestañas Principales
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
     [
         "📊 Resumen & Proyecciones",
         "🏆 Torneo de Modelos",
         "📈 Estructura Temporal",
+        "🔬 Diagnóstico Econométrico",
+        "⚡ Escenarios de Estrés",
         "🎲 Simulación Monte Carlo",
         "💾 Exportar Reporte",
     ]
@@ -314,8 +327,132 @@ with tab3:
     fig_spreads = create_spreads_history_figure(df_view)
     st.plotly_chart(fig_spreads)
 
-# ----------------- TAB 4: SIMULACIÓN MONTE CARLO -----------------
+# ----------------- TAB 4: DIAGNÓSTICO ECONOMÉTRICO -----------------
 with tab4:
+    st.subheader(f"🔬 Diagnóstico Econométrico y Verificación de Residuos ({tenor_labels[selected_col]})")
+    st.markdown(
+        "Evaluación de **estacionariedad** (Test ADF), **estructura autorregresiva** (ACF / PACF) "
+        "y **diagnóstico de ruido blanco** en los residuos del modelo predictivo (Test de Ljung-Box)."
+    )
+    
+    # 1. Test de Dickey-Fuller Aumentado
+    st.markdown("### 1. Test de Raíz Unitaria (Dickey-Fuller Aumentado - ADF)")
+    col_adf1, col_adf2 = st.columns(2)
+    
+    series_level = df_raw[selected_col].values
+    series_diff = np.diff(series_level)
+    
+    adf_level = run_adf_test(series_level)
+    adf_diff = run_adf_test(series_diff)
+    
+    with col_adf1:
+        st.markdown("**Serie en Nivel ($r_t$):**")
+        st.write(f"- **Estadístico ADF:** `{adf_level.test_statistic:.4f}`")
+        st.write(f"- **p-valor:** `{adf_level.p_value:.4f}`")
+        st.write(f"- **Valor Crítico 5%:** `{adf_level.critical_values.get('5%', 0):.4f}`")
+        if adf_level.is_stationary:
+            st.success("✅ " + adf_level.conclusion)
+        else:
+            st.warning("⚠️ " + adf_level.conclusion)
+            
+    with col_adf2:
+        st.markdown("**Serie en Primera Diferencia ($\Delta r_t = r_t - r_{t-1}$):**")
+        st.write(f"- **Estadístico ADF:** `{adf_diff.test_statistic:.4f}`")
+        st.write(f"- **p-valor:** `{adf_diff.p_value:.4e}`")
+        st.write(f"- **Valor Crítico 5%:** `{adf_diff.critical_values.get('5%', 0):.4f}`")
+        if adf_diff.is_stationary:
+            st.success("✅ " + adf_diff.conclusion)
+        else:
+            st.warning("⚠️ " + adf_diff.conclusion)
+    
+    st.markdown("---")
+    
+    # 2. Correlogramas ACF / PACF
+    st.markdown("### 2. Función de Autocorrelación (ACF) y Autocorrelación Parcial (PACF)")
+    acf_vals, pacf_vals, conf_bound = compute_acf_pacf(series_level, nlags=20)
+    fig_acf = create_acf_pacf_figure(acf_vals, pacf_vals, conf_bound, target_name=tenor_labels[selected_col])
+    st.plotly_chart(fig_acf)
+    
+    st.markdown("---")
+    
+    # 3. Diagnóstico de Residuos del Modelo y Test de Ljung-Box
+    st.markdown(f"### 3. Diagnóstico de Residuos del Modelo ({active_model_name})")
+    
+    # Calcular residuos sobre la ventana de backtesting
+    eval_len = min(horizon_days, 63)
+    train_slice = df_raw.iloc[:-eval_len]
+    actual_test = df_raw[selected_col].iloc[-eval_len:].values
+    
+    # Residuos in-sample/out-sample aproximados
+    if len(series_level) > 1:
+        fitted_naive = series_level[1:]
+        residuals = series_level[1:] - series_level[:-1]
+    else:
+        residuals = np.array([0.0])
+        
+    lb_result = run_ljung_box_test(residuals, lags=10)
+    
+    c_lb1, c_lb2 = st.columns([1, 2])
+    with c_lb1:
+        st.markdown("**Test de Ljung-Box ($H_0$: Ruido Blanco):**")
+        st.write(f"- **Retardos Evaluados:** `{lb_result.lags}`")
+        st.write(f"- **p-valor Mínimo:** `{min(lb_result.p_values):.4f}`")
+        if lb_result.is_white_noise:
+            st.success("✅ " + lb_result.conclusion)
+        else:
+            st.info("ℹ️ " + lb_result.conclusion)
+    with c_lb2:
+        df_lb = pd.DataFrame({
+            "Retardo (Lag)": list(range(1, lb_result.lags + 1)),
+            "Estadístico Q": np.round(lb_result.test_statistics, 3),
+            "p-valor": np.round(lb_result.p_values, 4),
+        })
+        st.dataframe(df_lb, hide_index=True)
+        
+    fig_resid = create_residuals_diagnostics_figure(residuals, model_name=active_model_name)
+    st.plotly_chart(fig_resid)
+
+# ----------------- TAB 5: ESCENARIOS DE ESTRÉS (STRESS TESTING) -----------------
+with tab5:
+    st.subheader(f"⚡ Simulador de Estrés Financiero y Shocks Macro ({tenor_labels[selected_col]})")
+    st.markdown(
+        "Permite simular el impacto de un **shock de Política Monetaria o liquidez** "
+        "y un incremento en la **volatilidad de mercado** sobre las proyecciones base."
+    )
+    
+    col_s1, col_s2 = st.columns(2)
+    with col_s1:
+        shock_val = st.slider(
+            "💥 Magnitud del Shock de Tasa (Puntos Base):",
+            min_value=-200,
+            max_value=200,
+            value=100,
+            step=25,
+            help="100 puntos base equivalen a un cambio de +1.00% anual.",
+        )
+    with col_s2:
+        vol_multiplier = st.select_slider(
+            "🌪️ Multiplicador de Volatilidad (Incertidumbre):",
+            options=[1.0, 1.25, 1.5, 1.75, 2.0],
+            value=1.25,
+            help="Amplía los conos de dispersión en escenarios de alta volatilidad.",
+        )
+        
+    stress_result = simulate_stress_scenarios(
+        active_forecast,
+        shock_bp=float(shock_val),
+        vol_multiplier=float(vol_multiplier),
+    )
+    
+    # Gráfico de Escenarios de Estrés
+    fig_stress = create_stress_testing_figure(stress_result, target_name=tenor_labels[selected_col])
+    st.plotly_chart(fig_stress)
+    
+    st.markdown("### 📋 Cuadro de Impacto de Estrés por Hito Temporal")
+    st.dataframe(stress_result.impact_milestones, hide_index=True)
+
+# ----------------- TAB 6: SIMULACIÓN MONTE CARLO -----------------
+with tab6:
     st.subheader(f"🎲 Simulación Estocástica de Monte Carlo ({tenor_labels[selected_col]})")
     
     # Calibrar Vasicek
@@ -348,8 +485,8 @@ with tab4:
     fig_mc_hist = create_monte_carlo_hist_figure(mc_res.terminal_distribution, horizon_label=horizon_label)
     st.plotly_chart(fig_mc_hist)
 
-# ----------------- TAB 5: EXPORTADOR DE REPORTES -----------------
-with tab5:
+# ----------------- TAB 7: EXPORTADOR DE REPORTES -----------------
+with tab7:
     st.subheader("💾 Exportación de Reportes y Datos")
     st.markdown("Descarga los datos históricos oficiales de CBF, las proyecciones y las métricas del torneo en Excel o CSV.")
     
