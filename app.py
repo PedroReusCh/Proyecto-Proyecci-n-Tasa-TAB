@@ -2,6 +2,9 @@
 Sistema de Proyección Financiera de Tasas TAB UF (Chilean Financial Benchmarks).
 Aplicación Web Interactiva en Streamlit.
 """
+import warnings
+warnings.filterwarnings("ignore")
+
 from typing import Dict
 import numpy as np
 import pandas as pd
@@ -219,7 +222,7 @@ with tab1:
         active_forecast,
         target_name=tenor_labels[selected_col],
     )
-    st.plotly_chart(fig_main, use_container_width=True)
+    st.plotly_chart(fig_main)
     
     # Tabla de Resumen de Proyecciones Clave
     st.markdown("### 📋 Cuadro Detallado de Proyecciones por Hito")
@@ -246,7 +249,7 @@ with tab1:
                 "Variación vs Actual": f"{val_pt - last_val:+.2f}%",
             })
     
-    st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(table_rows), hide_index=True)
 
 # ----------------- TAB 2: TORNEO DE MODELOS -----------------
 with tab2:
@@ -269,12 +272,12 @@ with tab2:
         }
         for s in tournament.scores
     ])
-    st.dataframe(tourn_df, use_container_width=True, hide_index=True)
+    st.dataframe(tourn_df, hide_index=True)
     
     st.markdown("---")
     st.subheader("📊 Comparación Gráfica de Todos los Modelos en Competencia")
     fig_comp = create_tournament_comparison_figure(all_forecasts, target_name=tenor_labels[selected_col])
-    st.plotly_chart(fig_comp, use_container_width=True)
+    st.plotly_chart(fig_comp)
 
 # ----------------- TAB 3: ESTRUCTURA TEMPORAL -----------------
 with tab3:
@@ -289,7 +292,7 @@ with tab3:
     projected_curves = compute_projected_curves(current_curve, fc_90, fc_180, fc_360)
     
     fig_curve = create_term_structure_figure(current_curve, projected_curves)
-    st.plotly_chart(fig_curve, use_container_width=True)
+    st.plotly_chart(fig_curve)
     
     st.markdown("---")
     st.subheader("📉 Spreads de Plazo: Pendiente (Slope) y Curvatura (Butterfly)")
@@ -309,7 +312,7 @@ with tab3:
         )
     
     fig_spreads = create_spreads_history_figure(df_view)
-    st.plotly_chart(fig_spreads, use_container_width=True)
+    st.plotly_chart(fig_spreads)
 
 # ----------------- TAB 4: SIMULACIÓN MONTE CARLO -----------------
 with tab4:
@@ -338,12 +341,12 @@ with tab4:
     )
     
     fig_mc_fan = create_monte_carlo_fan_figure(mc_res, target_name=tenor_labels[selected_col])
-    st.plotly_chart(fig_mc_fan, use_container_width=True)
+    st.plotly_chart(fig_mc_fan)
     
     st.markdown("---")
     st.subheader(f"📊 Distribución Terminal de Tasas a {horizon_label}")
     fig_mc_hist = create_monte_carlo_hist_figure(mc_res.terminal_distribution, horizon_label=horizon_label)
-    st.plotly_chart(fig_mc_hist, use_container_width=True)
+    st.plotly_chart(fig_mc_hist)
 
 # ----------------- TAB 5: EXPORTADOR DE REPORTES -----------------
 with tab5:
@@ -395,7 +398,6 @@ with tab5:
             data=excel_data,
             file_name=f"Proyeccion_TAB_UF_{selected_col}_{cbf_result.last_date.strftime('%Y%m%d')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
         )
     with c2:
         csv_data = generate_csv_report(df_proj_export)
@@ -404,5 +406,4 @@ with tab5:
             data=csv_data,
             file_name=f"Proyecciones_{selected_col}.csv",
             mime="text/csv",
-            use_container_width=True,
         )
